@@ -1,0 +1,11 @@
+{
+  "name": "red-pill",
+  "version": "1.0.0",
+  "description": "Multi-tier research orchestrator + semantic knowledge base for Claude Code. Oracle sends Haiku scouts in parallel, Sonnet synthesizes, Opus judges. Mainframe stores and retrieves knowledge on demand.",
+  "author": {
+    "name": "sushiHex"
+  },
+  "repository": "https://github.com/sushiHex/red-pill",
+  "license": "MIT",
+  "keywords": ["research", "oracle", "agents", "knowledge-base", "rag", "multi-agent"]
+}

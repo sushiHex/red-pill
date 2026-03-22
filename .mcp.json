@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "local-rag": {
+      "command": "npx",
+      "args": ["-y", "mcp-local-rag"],
+      "env": {
+        "BASE_DIR": "${HOME}/.claude/mainframe",
+        "DB_PATH": "${HOME}/.claude/mainframe/.lancedb",
+        "CACHE_DIR": "${HOME}/.claude/mainframe/.models"
+      }
+    }
+  }
+}
