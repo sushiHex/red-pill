@@ -56,7 +56,4 @@ Status lines stream to stderr in real-time. The report prints to stdout.
 ## After completion
 
 1. Present the findings and execution metrics to the user.
-2. Save the report to the Mainframe using `/mainframe save` behavior:
-   - Write to `~/.claude/mainframe/oracle/<YYYY-MM-DD>-<topic-slug>.md` with YAML frontmatter (title, tags, created, updated).
-   - Ingest the file via the local-rag MCP server.
-   - Confirm: "Report saved to Mainframe and indexed."
+2. Save the report to the Mainframe via `/mainframe save`, targeting the `oracle/` folder with filename `<YYYY-MM-DD>-<topic-slug>.md`.

@@ -27,8 +27,6 @@ That's it. The plugin registers MCP servers, installs dependencies, and creates 
 |---|---|
 | `/oracle [N] <question>` | N chains of 10 Haiku scouts + Sonnet synthesis. Default 1 chain. |
 | `/mainframe save` | Save knowledge to the semantic knowledge base |
-| `/mainframe rebuild` | Re-index all Mainframe content |
-| `/mainframe clean` | Audit and fix Mainframe quality |
 | `/red-pill` | Initialize a project for the ecosystem |
 | `/red-pill status` | System health check |
 | `/red-pill audit` | Audit existing CLAUDE.md |
@@ -73,12 +71,8 @@ The Mainframe is a folder of markdown files at `~/.claude/mainframe/` with seman
 
 ```
 ~/.claude/mainframe/
-├── library/        Language conventions, coding standards
-├── oracle/         Auto-saved Oracle research reports
-├── architecture/   System designs and patterns
-├── gotchas/        Battle-tested warnings
-├── research/       Deep dives and comparisons
-└── notes/          Everything else
+├── library/        Reference material — conventions, gotchas, designs
+└── oracle/         Auto-saved Oracle research reports
 ```
 
 Search scores: < 0.3 strong match, 0.3-0.5 moderate, > 0.7 skip.

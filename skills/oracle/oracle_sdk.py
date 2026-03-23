@@ -71,6 +71,7 @@ def _normalize_prompts(raw: list[dict]) -> list[dict]:
         for p in raw:
             if "_normalized" not in p:
                 p["prompt"] += SCOUT_SUFFIX
+                p["_normalized"] = True
         return raw
 
     # Streamlined format: just dimension + prompt
@@ -92,6 +93,7 @@ def _normalize_prompts(raw: list[dict]) -> list[dict]:
             "id": i + 1,
             "dimension": p["dimension"],
             "prompt": p["prompt"] + SCOUT_SUFFIX,
+            "_normalized": True,
         })
     return prompts
 
@@ -427,7 +429,7 @@ GitHub MCP tools available — prefer these over WebSearch for repo data:
 
         # Build the input: all scout results for this chain
         # Cap each Smith report to ~3K chars to prevent Anderson input from blowing up
-        MAX_SMITH_CHARS = 3000
+        MAX_SMITH_CHARS = 5000
         truncated = []
         parts = []
         for r in scout_results:
@@ -532,9 +534,10 @@ Organize, don't compress — Opus will do the editorial judgment."""
                     duration_ms=ANDERSON_TIMEOUT_S * 1000,
                 )
 
-        # Base 3s delay lets OS reclaim Smith subprocesses, then 2s stagger between Andersons
+        # Multi-chain: 3s base delay + 2s stagger to avoid subprocess race condition
+        # Single chain: no stagger needed (no contention)
         tasks = [
-            _compress_with_timeout(chain, scouts, delay=3 + i * 2)
+            _compress_with_timeout(chain, scouts, delay=(3 + i * 2) if len(chains) > 1 else 0)
             for i, (chain, scouts) in enumerate(sorted(chains.items()))
         ]
         results = await asyncio.gather(*tasks)
@@ -556,7 +559,7 @@ Organize, don't compress — Opus will do the editorial judgment."""
     # ----- Main orchestration -----
 
     async def run(self, question: str, prompts: list[dict] | None = None) -> str:
-        """Execute the full oracle v4.0 protocol with true isolation."""
+        """Execute the full oracle v4.2 protocol with true isolation."""
         self.metrics = OracleMetrics(start_time=time.time())
 
         if prompts:
@@ -570,22 +573,29 @@ Organize, don't compress — Opus will do the editorial judgment."""
         # Phase 2: Scout (all parallel)
         scout_results = await self.scout(prompts)
 
-        # Phase 3: Compress (one per chain, parallel, isolated)
-        # TRUE ISOLATION: Python groups by chain. Each compressor sees ONLY its chain.
-        compressor_results = await self.compress(scout_results)
-
-        if self.chains == 1:
-            report = compressor_results[0].summary if compressor_results else "ERROR: No compressor results"
+        # Guard: if all scouts failed, skip Anderson entirely
+        successful_scouts = [r for r in scout_results if not r.error]
+        if not successful_scouts:
+            self.status("  WARNING: All Smiths failed or timed out. Skipping Anderson.")
+            report = "ERROR: All Smiths failed or timed out. No data to synthesize."
         else:
-            # Multi-chain: return all Anderson reports directly to the Opus session.
-            # Opus does cross-chain synthesis better than Sonnet, and gets full fidelity.
-            chain_reports = []
-            for r in compressor_results:
-                if not r.error:
-                    chain_reports.append(f"{'=' * 60}\n## Chain {r.chain} — Anderson Report\n{'=' * 60}\n\n{r.summary}")
-                else:
-                    chain_reports.append(f"## Chain {r.chain} — ERROR: {r.error}")
-            report = "\n\n".join(chain_reports)
+            # Phase 3: Compress (one per chain, parallel, isolated)
+            # TRUE ISOLATION: Python groups by chain. Each compressor sees ONLY its chain.
+            compressor_results = await self.compress(scout_results)
+
+            if not compressor_results:
+                report = "ERROR: No compressor results"
+            elif self.chains == 1:
+                report = compressor_results[0].summary
+            else:
+                # Multi-chain: return all Anderson reports directly to the Opus session.
+                chain_reports = []
+                for r in compressor_results:
+                    if not r.error:
+                        chain_reports.append(f"{'=' * 60}\n## Chain {r.chain} — Anderson Report\n{'=' * 60}\n\n{r.summary}")
+                    else:
+                        chain_reports.append(f"## Chain {r.chain} — ERROR: {r.error}")
+                report = "\n\n".join(chain_reports)
 
         # Append metrics footer
         m = self.metrics
@@ -642,8 +652,11 @@ async def main():
     if not sys.stdin.isatty():
         stdin_data = sys.stdin.read().strip()
         if stdin_data:
-            raw = json.loads(stdin_data)
-            # Auto-assign chain/id if missing (streamlined format)
+            try:
+                raw = json.loads(stdin_data)
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Invalid JSON on stdin: {e}", file=sys.stderr)
+                sys.exit(1)
             prompts = _normalize_prompts(raw)
 
     if not prompts and not args.question:

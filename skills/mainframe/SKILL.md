@@ -1,39 +1,25 @@
 ---
 name: mainframe
-description: "The Mainframe — persistent knowledge base for the Oracle system. Save, search, rebuild, and maintain the semantic knowledge store at ~/.claude/mainframe/."
-argument-hint: "[save|rebuild|clean]"
+description: "Save and search knowledge in the Mainframe — ~/.claude/mainframe/ indexed by mcp-local-rag for semantic search."
+argument-hint: "save <description> | search <query>"
 user-invocable: true
 ---
 
-# /mainframe — The Mainframe
-
-The Oracle researches. The Mainframe remembers. Markdown files at `~/.claude/mainframe/` indexed by mcp-local-rag for semantic search.
+# /mainframe
 
 ## /mainframe save <content description>
 
-1. Pick category: `library/` `oracle/` `architecture/` `gotchas/` `research/` `notes/`
-2. Filename: `<topic-slug>.md` (lowercase, hyphens, dates only for oracle/)
-3. Write with YAML frontmatter: title, tags, created, updated
-4. Ingest via local-rag MCP `ingest_file`
-5. If same topic exists, update it — don't create duplicates
-6. One topic per file. Under 500 lines. Split if larger.
+1. Pick folder: `library/` (reference material) or `oracle/` (research reports)
+2. Filename: `<topic-slug>.md` (lowercase, hyphens). For `oracle/` reports: `<YYYY-MM-DD>-<topic-slug>.md`.
+3. Write plain markdown. H1 = topic name. One topic per file, under 500 lines.
+4. If the same topic exists, update it — don't create duplicates.
+5. Ingest via local-rag MCP `ingest_file`.
 
-## /mainframe rebuild
+## /mainframe search <query>
 
-```bash
-npx -y mcp-local-rag --db-path ~/.claude/mainframe/.lancedb --cache-dir ~/.claude/mainframe/.models ingest --base-dir ~/.claude/mainframe ~/.claude/mainframe
-```
+1. Call local-rag MCP `query_documents` with the query.
+2. Scores: < 0.3 strong, 0.3-0.5 moderate, > 0.7 skip.
+3. Present: source file, score, key excerpt.
+4. If no strong matches, suggest alternative search terms.
 
-Note: On Windows, if `~` doesn't expand, use the full path (e.g., `C:/Users/<username>/.claude/mainframe`).
-
-## /mainframe clean
-
-1. Find .md files missing YAML frontmatter → add it
-2. Files over 500 lines → suggest splitting
-3. `updated` older than 6 months → flag as stale
-4. Unindexed files → ingest them
-5. Fix what's fixable, report what needs manual attention
-
-## Auto-save convention
-
-When saving to the Mainframe from any skill: write file with frontmatter, then call `ingest_file`.
+If the index needs rebuilding, run `npx -y mcp-local-rag` with `--db-path`, `--cache-dir`, and `--base-dir` all pointing to the user's `~/.claude/mainframe/` directory.

@@ -6,7 +6,8 @@
       "env": {
         "BASE_DIR": "${HOME}/.claude/mainframe",
         "DB_PATH": "${HOME}/.claude/mainframe/.lancedb",
-        "CACHE_DIR": "${HOME}/.claude/mainframe/.models"
+        "CACHE_DIR": "${HOME}/.claude/mainframe/.models",
+        "MODEL_NAME": "Xenova/bge-small-en-v1.5"
       }
     }
   }

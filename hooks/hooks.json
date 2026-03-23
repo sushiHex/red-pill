@@ -1,16 +1,18 @@
 {
-  "SessionStart": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "pip install claude-agent-sdk>=0.1.48 2>/dev/null || true"
-        },
-        {
-          "type": "command",
-          "command": "mkdir -p ~/.claude/mainframe/{library,oracle,architecture,gotchas,research,notes} 2>/dev/null || true"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m pip show claude-agent-sdk >/dev/null 2>&1 || python -m pip install claude-agent-sdk>=0.1.48 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "mkdir -p ~/.claude/mainframe/{library,oracle} 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
 }
