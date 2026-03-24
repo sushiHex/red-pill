@@ -326,8 +326,9 @@ Return ONLY a JSON array:
                 opts["mcp_servers"] = mcp
                 opts["allowed_tools"] = tools + ["mcp__github__*"]
 
-            system = """Research scout. Search thoroughly, report findings, do NOT speculate.
+            system = """Research scout. Search thoroughly, report findings concisely, do NOT speculate.
 
+Be dense: facts, numbers, and sources. No filler, no restating the question, no introductions.
 Tag every number with confidence: HIGH (primary source), MEDIUM (derived), LOW (estimated).
 Flag all LOW-confidence numbers explicitly."""
             if mcp:
@@ -429,7 +430,7 @@ GitHub MCP tools available — prefer these over WebSearch for repo data:
 
         # Build the input: all scout results for this chain
         # Cap each Smith report to ~3K chars to prevent Anderson input from blowing up
-        MAX_SMITH_CHARS = 5000
+        MAX_SMITH_CHARS = 8000
         truncated = []
         parts = []
         for r in scout_results:
