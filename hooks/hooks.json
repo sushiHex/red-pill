@@ -9,7 +9,7 @@
           },
           {
             "type": "command",
-            "command": "mkdir -p ~/.claude/mainframe/{library,oracle} 2>/dev/null || true"
+            "command": "mkdir -p ~/.claude/mainframe 2>/dev/null || true"
           }
         ]
       }

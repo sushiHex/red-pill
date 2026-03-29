@@ -42,7 +42,7 @@ if "CLAUDECODE" in os.environ:
 DEFAULT_CHAINS = 1
 MAX_CHAINS = 8
 SCOUTS_PER_CHAIN = 10
-SCOUT_TIMEOUT_S = 300  # 5 min per Smith — kill hung agents
+SCOUT_TIMEOUT_S = 360  # 6 min per Smith — kill hung agents
 ANDERSON_TIMEOUT_S = 480  # 8 min per Anderson — Sonnet needs time, longest seen was 430s
 # Max 20x credit system (source: oreateai.com reverse-engineering, ~Mar 2026)
 # Credits = (input_tokens * model_weight) + (output_tokens * model_weight * 5)
@@ -424,26 +424,39 @@ GitHub MCP tools available — prefer these over WebSearch for repo data:
 
     # ----- Phase 3: Compress -----
 
+    def _build_scout_data(self, scout_results: list[ScoutResult], max_per_smith: int = 8000, max_total: int = 50000) -> str:
+        """Build scout data string with per-Smith AND total caps. Single-pass."""
+        valid = [r for r in scout_results if not r.error]
+        if not valid:
+            return ""
+
+        # Calculate effective per-smith cap: min of explicit cap and total budget / num smiths
+        # Account for ~50 chars overhead per smith (header line + separators)
+        overhead_per = 50
+        budget_per = (max_total - len(valid) * overhead_per) // len(valid) if valid else max_per_smith
+        effective_cap = min(max_per_smith, max(500, budget_per))  # floor at 500 chars
+
+        truncated = []
+        parts = []
+        for r in valid:
+            text = r.result_text
+            if len(text) > effective_cap:
+                truncated.append(f"#{r.scout_id} ({len(text)} -> {effective_cap})")
+                text = text[:effective_cap] + "... [truncated]"
+            parts.append(f"--- Smith #{r.scout_id} ({r.dimension}) ---\n{text}")
+
+        if truncated:
+            self.log(f"  Truncated {len(truncated)} Smiths to {effective_cap} chars (total cap {max_total})")
+
+        return "\n\n".join(parts)
+
     async def _run_compressor(self, chain: str, scout_results: list[ScoutResult]) -> CompressorResult:
         """Run a single Sonnet compressor for one chain."""
         t0 = time.time()
 
-        # Build the input: all scout results for this chain
-        # Cap each Smith report to ~3K chars to prevent Anderson input from blowing up
-        MAX_SMITH_CHARS = 8000
-        truncated = []
-        parts = []
-        for r in scout_results:
-            if r.error:
-                continue
-            text = r.result_text
-            if len(text) > MAX_SMITH_CHARS:
-                truncated.append(f"#{r.scout_id} ({len(text)} -> {MAX_SMITH_CHARS})")
-                text = text[:MAX_SMITH_CHARS] + "... [truncated]"
-            parts.append(f"--- Smith #{r.scout_id} ({r.dimension}) ---\n{text}")
-        if truncated:
-            self.log(f"  Truncated {len(truncated)} Smiths: {', '.join(truncated)}")
-        scout_data = "\n\n".join(parts)
+        max_per_smith = 8000
+        max_total = 50000
+        scout_data = self._build_scout_data(scout_results, max_per_smith=max_per_smith, max_total=max_total)
         error_scouts = [r for r in scout_results if r.error]
         if error_scouts:
             scout_data += "\n\n--- Errored Smiths ---\n" + "\n".join(
@@ -528,18 +541,18 @@ Organize, don't compress — Opus will do the editorial judgment."""
                 )
             except asyncio.TimeoutError:
                 self.status(f"  Anderson {chain} TIMEOUT [{ANDERSON_TIMEOUT_S}s]")
-                return CompressorResult(
-                    chain=chain,
-                    summary="",
-                    error=f"Timed out after {ANDERSON_TIMEOUT_S}s",
-                    duration_ms=ANDERSON_TIMEOUT_S * 1000,
-                )
+                return CompressorResult(chain=chain, summary="", error=f"Timed out after {ANDERSON_TIMEOUT_S}s", duration_ms=ANDERSON_TIMEOUT_S * 1000)
+            except Exception as e:
+                self.status(f"  Anderson {chain} FAILED: {e}")
+                return CompressorResult(chain=chain, summary="", error=str(e), duration_ms=0)
 
-        # Multi-chain: 3s base delay + 2s stagger to avoid subprocess race condition
+        # Multi-chain: reverse sort so Chain A (heaviest, most crash-prone) launches LAST
+        # with the most stagger delay. 3s base + 2s per chain.
         # Single chain: no stagger needed (no contention)
+        sorted_chains = sorted(chains.items(), reverse=True) if len(chains) > 1 else sorted(chains.items())
         tasks = [
             _compress_with_timeout(chain, scouts, delay=(3 + i * 2) if len(chains) > 1 else 0)
-            for i, (chain, scouts) in enumerate(sorted(chains.items()))
+            for i, (chain, scouts) in enumerate(sorted_chains)
         ]
         results = await asyncio.gather(*tasks)
 

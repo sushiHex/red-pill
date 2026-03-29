@@ -56,4 +56,4 @@ Status lines stream to stderr in real-time. The report prints to stdout.
 ## After completion
 
 1. Present the findings and execution metrics to the user.
-2. Save the report to the Mainframe via `/mainframe save`, targeting the `oracle/` folder with filename `<YYYY-MM-DD>-<topic-slug>.md`.
+2. Save the report to the current project's `research/` directory with filename `<YYYY-MM-DD>-<topic-slug>.md`. It will be auto-ingested into the Mainframe.
