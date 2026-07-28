@@ -1,8 +1,8 @@
 """
-Oracle SDK v4.2 — Multi-tier research orchestrator (Claude Agent SDK).
+Oracle SDK v4.3 — Multi-tier research orchestrator (Claude Agent SDK).
 
   Phase 1: Smiths (N*10 parallel Haiku) -> tool access (Read, Grep, WebSearch, GitHub MCP)
-  Phase 2: Anderson (N parallel Sonnet) -> each sees ONLY its chain's Smiths
+  Phase 2: Anderson (N parallel Sonnet) -> each sees ONLY its chain's Smiths, no truncation
   Multi-chain: all Anderson reports returned directly to Opus (no merger phase).
 
 Prompts are piped via stdin as JSON. The calling session (Claude Code)
@@ -42,7 +42,7 @@ if "CLAUDECODE" in os.environ:
 DEFAULT_CHAINS = 1
 MAX_CHAINS = 8
 SCOUTS_PER_CHAIN = 10
-SCOUT_TIMEOUT_S = 360  # 6 min per Smith — kill hung agents
+SCOUT_TIMEOUT_S = 390  # 6.5 min per Smith — kill hung agents
 ANDERSON_TIMEOUT_S = 480  # 8 min per Anderson — Sonnet needs time, longest seen was 430s
 # Max 20x credit system (source: oreateai.com reverse-engineering, ~Mar 2026)
 # Credits = (input_tokens * model_weight) + (output_tokens * model_weight * 5)
@@ -64,15 +64,18 @@ SCOUT_SUFFIX = (
 
 def _normalize_prompts(raw: list[dict]) -> list[dict]:
     """Auto-assign chain/id and append standard suffix if missing."""
+    if not raw:
+        return []
+
     # Detect if chains are pre-assigned
     has_chains = any("chain" in p for p in raw)
     if has_chains:
-        # Respect existing chain/id but append suffix
-        for p in raw:
-            if "_normalized" not in p:
-                p["prompt"] += SCOUT_SUFFIX
-                p["_normalized"] = True
-        return raw
+        # Respect existing chain/id but append suffix (copy to avoid mutating input)
+        return [
+            {**p, "prompt": p["prompt"] + SCOUT_SUFFIX, "_normalized": True}
+            if "_normalized" not in p else p
+            for p in raw
+        ]
 
     # Streamlined format: just dimension + prompt
     # Validate: must be a multiple of 10
@@ -279,6 +282,9 @@ Return ONLY a JSON array:
             prompt=prompt,
             options=ClaudeAgentOptions(
                 model="sonnet",
+                # Mechanical JSON emission; benchmarked low/medium/high all 100%
+                # correct, so `high` cost 1.7x tokens for nothing.
+                effort="low",
                 allowed_tools=["Read", "Grep", "Glob"],
                 system_prompt="Decompose research questions into orthogonal sub-prompts. Output ONLY valid JSON.",
             ),
@@ -321,6 +327,11 @@ Return ONLY a JSON array:
                 "model": "haiku",
                 "allowed_tools": tools,
                 "disallowed_tools": ["Bash", "Write", "Edit", "NotebookEdit", "Agent"],
+                # Scouting is search-and-report: -26% output tokens with citation
+                # breadth unchanged and zero empty results across 5 benchmark runs.
+                "thinking": {"type": "disabled"},
+                # Runaway guard only. Observed range 9-23 turns; do not lower below 25.
+                "max_turns": 30,
             }
             if mcp:
                 opts["mcp_servers"] = mcp
@@ -424,39 +435,20 @@ GitHub MCP tools available — prefer these over WebSearch for repo data:
 
     # ----- Phase 3: Compress -----
 
-    def _build_scout_data(self, scout_results: list[ScoutResult], max_per_smith: int = 8000, max_total: int = 50000) -> str:
-        """Build scout data string with per-Smith AND total caps. Single-pass."""
+    def _build_scout_data(self, scout_results: list[ScoutResult]) -> str:
+        """Build scout data string from all Smith results. No truncation — Anderson uses 1M context."""
         valid = [r for r in scout_results if not r.error]
         if not valid:
             return ""
 
-        # Calculate effective per-smith cap: min of explicit cap and total budget / num smiths
-        # Account for ~50 chars overhead per smith (header line + separators)
-        overhead_per = 50
-        budget_per = (max_total - len(valid) * overhead_per) // len(valid) if valid else max_per_smith
-        effective_cap = min(max_per_smith, max(500, budget_per))  # floor at 500 chars
-
-        truncated = []
-        parts = []
-        for r in valid:
-            text = r.result_text
-            if len(text) > effective_cap:
-                truncated.append(f"#{r.scout_id} ({len(text)} -> {effective_cap})")
-                text = text[:effective_cap] + "... [truncated]"
-            parts.append(f"--- Smith #{r.scout_id} ({r.dimension}) ---\n{text}")
-
-        if truncated:
-            self.log(f"  Truncated {len(truncated)} Smiths to {effective_cap} chars (total cap {max_total})")
-
+        parts = [f"--- Smith #{r.scout_id} ({r.dimension}) ---\n{r.result_text}" for r in valid]
         return "\n\n".join(parts)
 
     async def _run_compressor(self, chain: str, scout_results: list[ScoutResult]) -> CompressorResult:
         """Run a single Sonnet compressor for one chain."""
         t0 = time.time()
 
-        max_per_smith = 8000
-        max_total = 50000
-        scout_data = self._build_scout_data(scout_results, max_per_smith=max_per_smith, max_total=max_total)
+        scout_data = self._build_scout_data(scout_results)
         error_scouts = [r for r in scout_results if r.error]
         if error_scouts:
             scout_data += "\n\n--- Errored Smiths ---\n" + "\n".join(
@@ -491,6 +483,11 @@ Organize, don't compress — Opus will do the editorial judgment."""
                 prompt=prompt,
                 options=ClaudeAgentOptions(
                     model="sonnet",
+                    # Largest single saving (~65% of run spend). Benchmarked at
+                    # production scale with planted contradictions, stale-vs-fresh
+                    # decoys and arithmetic errors: low/medium/high all scored
+                    # 100%. `high` emitted 3.1x the tokens for identical output.
+                    effort="low",
                     allowed_tools=["Read", "Grep", "Glob"],
                     system_prompt="You are Anderson. Organize Smith reports into structured findings. Preserve all unique signal — Opus handles final synthesis.",
                 ),
@@ -700,7 +697,7 @@ async def main():
     if args.report:
         import datetime
         filename = f"oracle-report-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.md"
-        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        filepath = os.path.join(os.getcwd(), filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(report)
         print(f"\nReport saved to: {filepath}", file=sys.stderr)
