@@ -1,11 +1,11 @@
 {
   "name": "red-pill",
   "version": "2.0.0",
-  "description": "Multi-tier research orchestrator + semantic knowledge base for Claude Code. Oracle sends Haiku scouts in parallel, Sonnet synthesizes, Opus judges. Mainframe recalls prior research automatically. Includes three standalone read-only research agents (Opus/Sonnet/Haiku tiers).",
+  "description": "Agentic research toolkit for Claude Code. Three standalone read-only research agents (Opus/Sonnet/Haiku tiers), plus Oracle for coordinated multi-agent fleets (Haiku scouts, Sonnet synthesis, Opus judgment). Mainframe recalls prior research automatically.",
   "author": {
     "name": "sushiHex"
   },
   "repository": "https://github.com/sushiHex/red-pill",
   "license": "MIT",
-  "keywords": ["research", "oracle", "agents", "knowledge-base", "rag", "multi-agent"]
+  "keywords": ["agents", "ai-agents", "multi-agent", "research", "oracle", "knowledge-base", "rag"]
 }

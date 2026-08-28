@@ -1,8 +1,6 @@
 # Red Pill
 
-Multi-tier research orchestrator + semantic knowledge base for Claude Code.
-
-The Oracle sends cheap Haiku scouts in parallel, Sonnet synthesizes, Opus judges. The Mainframe indexes all project knowledge for cross-project semantic search. Take the red pill — see your codebase clearly.
+**Agentic research toolkit for Claude Code.** Dispatch a single read-only agent for a quick lookup, or launch a coordinated multi-agent fleet for deep investigation — everything draws on a persistent semantic memory that recalls what you've already found. Take the red pill — see your codebase clearly.
 
 ## Install
 
@@ -12,35 +10,9 @@ The Oracle sends cheap Haiku scouts in parallel, Sonnet synthesizes, Opus judges
 
 That's it. The plugin registers the MCP server, installs dependencies, and creates directories automatically on first session.
 
-## Quick Start
-
-```
-/red-pill                              # Initialize or audit a project's CLAUDE.md
-/oracle what are the best testing frameworks for Swift   # Research anything
-```
-
-The Mainframe has no slash command — it's an ambient skill that loads itself
-whenever a task would benefit from recalling prior research (see below).
-
-## Components
-
-| Command | What it does |
-|---|---|
-| `/oracle [N] <question>` | N chains of 10 Haiku scouts + Sonnet synthesis. Default 1 chain. |
-| `/red-pill` | Initialize a project for the ecosystem |
-| `/red-pill status` | System health check |
-| `/red-pill audit` | Audit existing CLAUDE.md |
-
-Oracle and Mainframe are provided by their own independent, standalone projects
-([claude-oracle](https://github.com/sushiHex/claude-oracle),
-[mainframe-mcp](https://github.com/sushiHex/mainframe-mcp)) — Red Pill installs
-them as dependencies and wires them into Claude Code rather than bundling its
-own forks.
-
 ## Agents
 
-Three standalone read-only research agents, usable directly via the Agent tool.
-They investigate and report — they never create, modify, or delete files:
+Three standalone, read-only research agents — dispatch one directly via the Agent tool for a single question, no orchestration needed:
 
 | Agent | Model | Use for |
 |---|---|---|
@@ -48,7 +20,16 @@ They investigate and report — they never create, modify, or delete files:
 | agent-jones | Sonnet | Standard codebase queries, moderate-depth research |
 | agent-brown | Haiku | Quick lookups, simple searches, fast fact-checking |
 
-## Architecture
+All three investigate and report — they never create, modify, delete, or install anything, even if asked to.
+
+## Oracle — multi-agent research fleets
+
+When one agent's pass isn't enough coverage, `/oracle` coordinates a full fleet instead of a single dispatch:
+
+```
+/oracle what are the best testing frameworks for Swift
+/oracle 4 <question>     # 4 chains = 40 Haiku scouts + 4 Sonnet synthesizers, isolated per chain
+```
 
 ```
 You ask a question
@@ -67,16 +48,18 @@ You ask a question
   Optionally saved to project research/ (auto-ingested into Mainframe on next sync)
 ```
 
-## How the Mainframe Works
+Same guarantee as the standalone agents: pure investigation, no side effects. Provided by the independent [claude-oracle](https://github.com/sushiHex/claude-oracle) project — Red Pill installs it as a dependency rather than bundling a fork.
 
-The Mainframe indexes all project `research/`, `docs/`, and `CLAUDE.md` files for cross-project semantic search. Knowledge lives in your projects — the Mainframe just makes it searchable from anywhere.
+## Mainframe — memory for every agent above
+
+Every agent and fleet above can draw on a semantic index of everything you've already researched, across every project. It's ambient: no slash command, it loads itself into context whenever a task would benefit from recalling prior work.
 
 ```
 ~/repos/project-a/research/*.md  ──→ indexed
 ~/repos/project-a/docs/*.md      ──→ indexed
 ~/repos/project-a/CLAUDE.md      ──→ indexed
 ~/repos/project-b/research/*.md  ──→ indexed
-...all searchable from any project
+...all searchable from any project, by any agent
 ```
 
 Backend: [mainframe-mcp](https://github.com/sushiHex/mainframe-mcp). Red Pill
@@ -87,8 +70,12 @@ LLM consolidator), replace that file's contents with one of the presets in
 [mainframe-mcp's own `configs/`](https://github.com/sushiHex/mainframe-mcp/tree/main/configs)
 (not installed by pip — copy the preset you want). `mainframe-mcp`'s own
 dependencies (`bitsandbytes`, `accelerate`, `sentence-transformers`, …) install
-regardless of which config you run, so first install is heavier than Red
-Pill's previous CPU-only backend.
+regardless of which config you run, so first install is heavier than a
+CPU-only backend would otherwise be.
+
+## Project Init
+
+`/red-pill` generates or audits a project's `CLAUDE.md`, searching the Mainframe for relevant conventions and gotchas along the way. `/red-pill status` checks that Oracle and Mainframe are installed and responding.
 
 ## Project File Placement
 
