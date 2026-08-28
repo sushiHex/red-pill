@@ -1,6 +1,6 @@
 ---
 name: agent-brown
-description: "Research specialist (Haiku tier). Same capabilities as agent-smith but runs on Haiku for maximum speed and lowest cost. Use for simple lookups, file reads, grep searches, and quick fact-checking where speed matters more than depth."
+description: "Research specialist (Haiku tier). Same capabilities as agent-smith (read-only — investigates and reports, never modifies files or state) but runs on Haiku for maximum speed and lowest cost. Use for simple lookups, file reads, grep searches, and quick fact-checking where speed matters more than depth."
 model: haiku
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 ---

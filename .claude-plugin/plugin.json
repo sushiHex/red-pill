@@ -1,7 +1,7 @@
 {
   "name": "red-pill",
   "version": "2.0.0",
-  "description": "Multi-tier research orchestrator + semantic knowledge base for Claude Code. Oracle sends Haiku scouts in parallel, Sonnet synthesizes, Opus judges. Mainframe stores and retrieves knowledge on demand.",
+  "description": "Multi-tier research orchestrator + semantic knowledge base for Claude Code. Oracle sends Haiku scouts in parallel, Sonnet synthesizes, Opus judges. Mainframe recalls prior research automatically. Includes three standalone read-only research agents (Opus/Sonnet/Haiku tiers).",
   "author": {
     "name": "sushiHex"
   },

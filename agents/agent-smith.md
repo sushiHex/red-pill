@@ -1,9 +1,10 @@
 ---
 name: agent-smith
 description: "Deep research specialist for codebase and knowledge queries. From instant lookups to deep multi-round
-  investigations. Classifies queries, parallelizes search, and converges on high-confidence answers. ALWAYS use this agent when the
-  user says 'agent smith', 'agent smiths', 'smiths', or '10 parallel agents'. For research tasks spanning code + docs + web,
-  ALWAYS prefer this over manual searching. Use PROACTIVELY for research queries."
+  investigations. Read-only — investigates and reports, never modifies files or state. Classifies queries, parallelizes search,
+  and converges on high-confidence answers. ALWAYS use this agent when the user says 'agent smith', 'agent smiths', 'smiths',
+  or '10 parallel agents'. For research tasks spanning code + docs + web, ALWAYS prefer this over manual searching.
+  Use PROACTIVELY for research queries."
 model: opus
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 ---
