@@ -1,6 +1,6 @@
 ---
 name: agent-jones
-description: "Research specialist (Sonnet tier). Same capabilities as agent-smith but runs on Sonnet for cost-efficient research. Use for standard codebase queries, file lookups, and moderate-depth investigations where Opus-level reasoning isn't needed."
+description: "Research specialist (Sonnet tier). Same capabilities as agent-smith (read-only — investigates and reports, never modifies files or state) but runs on Sonnet for cost-efficient research. Use for standard codebase queries, file lookups, and moderate-depth investigations where Opus-level reasoning isn't needed."
 model: sonnet
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 ---

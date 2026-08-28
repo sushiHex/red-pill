@@ -10,12 +10,12 @@ The Oracle sends cheap Haiku scouts in parallel, Sonnet synthesizes, Opus judges
 /plugin install red-pill
 ```
 
-That's it. The plugin registers MCP servers, installs dependencies, and creates directories automatically on first session.
+That's it. The plugin registers the MCP server, installs dependencies, and creates directories automatically on first session.
 
 ## Quick Start
 
 ```
-/red-pill                              # Initialize a project (scan, generate CLAUDE.md, health check)
+/red-pill                              # Initialize or audit a project's CLAUDE.md
 /oracle what are the best testing frameworks for Swift   # Research anything
 ```
 
@@ -39,7 +39,8 @@ own forks.
 
 ## Agents
 
-Three standalone research agents, usable directly via the Agent tool:
+Three standalone read-only research agents, usable directly via the Agent tool.
+They investigate and report — they never create, modify, or delete files:
 
 | Agent | Model | Use for |
 |---|---|---|
@@ -56,13 +57,14 @@ You ask a question
         |
   Opus decomposes into N*10 focused prompts
         |
-  N*10 Haiku Smiths search in parallel (WebSearch, GitHub MCP, Read, Grep)
+  N*10 Haiku Smiths search in parallel (WebSearch, WebFetch by default;
+  add --local for Read/Grep/Glob, or set GITHUB_PAT for GitHub MCP)
         |
   N Sonnet Andersons organize findings (one per chain, isolated)
         |
   Opus synthesizes the final answer
         |
-  Report saved to project research/ (auto-ingested into Mainframe)
+  Optionally saved to project research/ (auto-ingested into Mainframe on next sync)
 ```
 
 ## How the Mainframe Works
@@ -78,13 +80,15 @@ The Mainframe indexes all project `research/`, `docs/`, and `CLAUDE.md` files fo
 ```
 
 Backend: [mainframe-mcp](https://github.com/sushiHex/mainframe-mcp). Red Pill
-seeds a CPU-only config on first run (`BAAI/bge-small-en-v1.5`, no GPU
-required) so it works out of the box; edit `~/.claude/mainframe/config.json`
-for GPU-accelerated models (larger embedders, rerankers, and an LLM
-consolidator) — see that project's `configs/` for presets. `mainframe-mcp`'s
-own dependencies (`bitsandbytes`, `accelerate`, `sentence-transformers`, …)
-install regardless of which config you run, so first install is heavier than
-Red Pill's previous CPU-only backend.
+seeds its bundled `configs/cpu-only.json` (`BAAI/bge-small-en-v1.5`, no GPU
+required) to `~/.claude/mainframe/config.json` on first run, so it works out
+of the box. For GPU-accelerated models (larger embedders, rerankers, and an
+LLM consolidator), replace that file's contents with one of the presets in
+[mainframe-mcp's own `configs/`](https://github.com/sushiHex/mainframe-mcp/tree/main/configs)
+(not installed by pip — copy the preset you want). `mainframe-mcp`'s own
+dependencies (`bitsandbytes`, `accelerate`, `sentence-transformers`, …) install
+regardless of which config you run, so first install is heavier than Red
+Pill's previous CPU-only backend.
 
 ## Project File Placement
 
@@ -97,8 +101,10 @@ Every project follows this convention:
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/code) with active subscription
-- Node.js 18+ (for MCP servers)
-- Python 3.10+ (for Oracle SDK)
+- `git` (both Oracle and Mainframe install from GitHub — neither is on PyPI)
+- Python 3.10+ (runs both Oracle and Mainframe)
+- Node.js 18+ — optional, only needed if you set `GITHUB_PAT` for Oracle's
+  GitHub MCP scouting
 
 ## Privacy
 

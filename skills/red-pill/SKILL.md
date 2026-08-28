@@ -1,6 +1,6 @@
 ---
 name: red-pill
-description: "Initialize or audit a project's CLAUDE.md. Scans codebase, searches Mainframe for relevant knowledge, applies Boris Cherny's principles."
+description: "Initialize or audit a project's CLAUDE.md, or check ecosystem health. Scans codebase, searches Mainframe for relevant knowledge, applies Boris Cherny's principles."
 argument-hint: "[audit|status|global]"
 user-invocable: true
 ---
@@ -12,7 +12,7 @@ user-invocable: true
 - `/red-pill` — If CLAUDE.md exists, audit it. Otherwise generate one.
 - `/red-pill audit` — Audit existing CLAUDE.md
 - `/red-pill global` — Audit `~/.claude/CLAUDE.md`
-- `/red-pill status` — System health check (Node.js, SDK, MCP, Mainframe)
+- `/red-pill status` — System health check (Oracle, Mainframe, optional GitHub MCP)
 
 ## Generate (no existing CLAUDE.md)
 
@@ -34,7 +34,8 @@ user-invocable: true
 
 ## Status
 
-1. `node --version` — Node.js present?
-2. `pip show claude-agent-sdk` — SDK installed?
-3. Call `list_files` via local-rag MCP — responding?
-4. Report what's ready, what's missing.
+1. `pip show claude-oracle` — Oracle installed?
+2. `pip show mainframe-mcp` — Mainframe installed?
+3. Call `search` via the mainframe-mcp MCP server — responding?
+4. `node --version` — present? (only needed if `GITHUB_PAT` is set, for Oracle's optional GitHub MCP scouting)
+5. Report what's ready, what's missing.
