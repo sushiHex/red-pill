@@ -5,11 +5,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m pip show claude-agent-sdk >/dev/null 2>&1 || python -m pip install claude-agent-sdk>=0.1.48 2>/dev/null || true"
+            "command": "python -m pip show claude-oracle >/dev/null 2>&1 || python -m pip install 'git+https://github.com/sushiHex/claude-oracle.git' 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "python -m pip show mainframe-mcp >/dev/null 2>&1 || python -m pip install 'git+https://github.com/sushiHex/mainframe-mcp.git' 2>/dev/null || true"
           },
           {
             "type": "command",
             "command": "mkdir -p ~/.claude/mainframe 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "test -f ~/.claude/mainframe/config.json || cp \"${CLAUDE_PLUGIN_ROOT}/configs/cpu-only.json\" ~/.claude/mainframe/config.json 2>/dev/null || true"
           }
         ]
       }

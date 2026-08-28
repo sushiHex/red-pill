@@ -17,19 +17,25 @@ That's it. The plugin registers MCP servers, installs dependencies, and creates 
 ```
 /red-pill                              # Initialize a project (scan, generate CLAUDE.md, health check)
 /oracle what are the best testing frameworks for Swift   # Research anything
-/mainframe search testing patterns     # Find stored knowledge across all projects
 ```
+
+The Mainframe has no slash command — it's an ambient skill that loads itself
+whenever a task would benefit from recalling prior research (see below).
 
 ## Components
 
 | Command | What it does |
 |---|---|
 | `/oracle [N] <question>` | N chains of 10 Haiku scouts + Sonnet synthesis. Default 1 chain. |
-| `/mainframe search <query>` | Semantic search across all project research, docs, and CLAUDE.md |
-| `/mainframe save` | Save knowledge to the current project's research/ or docs/ directory |
 | `/red-pill` | Initialize a project for the ecosystem |
 | `/red-pill status` | System health check |
 | `/red-pill audit` | Audit existing CLAUDE.md |
+
+Oracle and Mainframe are provided by their own independent, standalone projects
+([claude-oracle](https://github.com/sushiHex/claude-oracle),
+[mainframe-mcp](https://github.com/sushiHex/mainframe-mcp)) — Red Pill installs
+them as dependencies and wires them into Claude Code rather than bundling its
+own forks.
 
 ## Agents
 
@@ -71,7 +77,14 @@ The Mainframe indexes all project `research/`, `docs/`, and `CLAUDE.md` files fo
 ...all searchable from any project
 ```
 
-Default MCP backend: [mcp-local-rag](https://github.com/shinpr/mcp-local-rag) (CPU, ~90MB model). For GPU acceleration, see [mainframe-mcp](https://github.com/sushiHex/mainframe-mcp).
+Backend: [mainframe-mcp](https://github.com/sushiHex/mainframe-mcp). Red Pill
+seeds a CPU-only config on first run (`BAAI/bge-small-en-v1.5`, no GPU
+required) so it works out of the box; edit `~/.claude/mainframe/config.json`
+for GPU-accelerated models (larger embedders, rerankers, and an LLM
+consolidator) — see that project's `configs/` for presets. `mainframe-mcp`'s
+own dependencies (`bitsandbytes`, `accelerate`, `sentence-transformers`, …)
+install regardless of which config you run, so first install is heavier than
+Red Pill's previous CPU-only backend.
 
 ## Project File Placement
 

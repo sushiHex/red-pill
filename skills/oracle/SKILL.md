@@ -1,13 +1,13 @@
 ---
 name: oracle
-description: "Multi-tier research orchestrator. Local session decomposes -> N*10 Smiths (Haiku) scout -> Anderson (Sonnet) synthesizes. Python enforces isolation — Anderson never sees raw Smith data."
+description: "Multi-tier research orchestrator. Local session decomposes -> N*10 Smiths (Haiku) scout -> Anderson (Sonnet) synthesizes. Python enforces isolation — each Anderson sees only its own chain's Smith data."
 argument-hint: "[chains] <research question>"
 user-invocable: true
 ---
 
-# Oracle v4.2 — SDK Execution
+# Oracle v4.6.0 — SDK Execution
 
-Run the oracle_sdk.py script with the user's research question.
+Run the installed `claude_oracle` package with the user's research question.
 
 ## Parse arguments
 
@@ -23,7 +23,7 @@ Examples:
 
 ## Build Smith prompts
 
-You ARE the Architect. Using your full conversation context, decompose the question into exactly `chains * 10` focused sub-prompts. Each Smith is a Haiku agent with WebSearch, WebFetch, Read, Grep, Glob, and GitHub MCP tools.
+You ARE the Architect. Using your full conversation context, decompose the question into exactly `chains * 10` focused sub-prompts. Each Smith is a Haiku agent with WebSearch, WebFetch, and (optional) GitHub MCP tools. Smiths are web-only by default; if the question requires reading THIS machine's files/repos, add `--local` at execution time to also grant Read, Grep, and Glob (see Execution).
 
 Generate a JSON array — chain/id/suffix are auto-assigned by Python:
 ```json
@@ -45,15 +45,17 @@ Guidelines:
 
 Write the JSON prompts to a temporary file, then pipe it into the script. Do NOT use heredocs — they break on Windows with JSON containing quotes.
 
-Find `oracle_sdk.py` in the same directory as this SKILL.md file, then run:
+Run the installed package directly — do NOT invoke `oracle_sdk.py` by path (some
+environments deny Bash commands that reference a skill directory by path):
 
 ```bash
-python <path-to-oracle_sdk.py> --verbose < oracle_prompts.json
+python -m claude_oracle --verbose < oracle_prompts.json
 ```
+
+Add `--local` ONLY when sub-prompts need the local filesystem (codebase questions). Default scouts are web-only: local Read combined with web access is a prompt-injection exfiltration surface, so don't grant it for pure web research.
 
 Status lines stream to stderr in real-time. The report prints to stdout.
 
 ## After completion
 
-1. Present the findings and execution metrics to the user.
-2. Save the report to the current project's `research/` directory with filename `<YYYY-MM-DD>-<topic-slug>.md`. It will be auto-ingested into the Mainframe.
+Present the findings and execution metrics to the user. Optionally save the report to your project's `research/` or `docs/` directory (e.g. `<YYYY-MM-DD>-<topic-slug>.md`) for later reference.
