@@ -22,6 +22,8 @@ Three standalone, read-only research agents — dispatch one directly via the Ag
 
 All three investigate and report — they never create, modify, delete, or install anything, even if asked to.
 
+Answers are built for the dispatcher to act on. Each one opens with how the agent classified the question and ends with a one-line status banner: confidence, which tools succeeded or failed, and explicit gaps when confidence falls short. Smith and Jones also report their three weakest confidence factors and suggest follow-up questions. Brown leaves those out because benchmarking showed they cost Haiku accuracy. Confidence is the agent's own estimate, not a calibrated probability.
+
 ## Oracle — multi-agent research fleets
 
 When one agent's pass isn't enough coverage, `/oracle` coordinates a full fleet instead of a single dispatch:

@@ -1,6 +1,6 @@
 {
   "name": "red-pill",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Agentic research toolkit for Claude Code. Three standalone read-only research agents (Opus/Sonnet/Haiku tiers), plus Oracle for coordinated multi-agent fleets (Haiku scouts, Sonnet synthesis, Opus judgment). Mainframe recalls prior research automatically.",
   "author": {
     "name": "sushiHex"
