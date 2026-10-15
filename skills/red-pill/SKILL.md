@@ -21,9 +21,12 @@ user-invocable: true
 3. Search the Mainframe for relevant conventions and gotchas for this stack
 4. Generate a CLAUDE.md:
    - Under 60 lines. Only rules that prevent mistakes.
-   - Sections: Stack, Structure, Commands, Conventions, Gotchas
+   - Sections: Stack, Structure, Commands, Conventions, Gotchas, Mainframe
    - Exact commands, not descriptions
    - Only rules that differ from Claude's defaults
+   - Mainframe section: paste the policy block under "Agent instructions" in
+     [MAINFRAME_QUERY.md](https://github.com/sushiHex/mainframe-mcp/blob/main/docs/MAINFRAME_QUERY.md)
+     verbatim (pip does not install that doc; fetch it). Omit the section if `pip show mainframe-mcp` fails.
 
 ## Audit (CLAUDE.md exists)
 
