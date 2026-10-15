@@ -47,8 +47,10 @@ skills/
   one at *runtime*, but does not avoid installing it.
 - No postInstall hooks in plugin system — use SessionStart hook instead
 - `${CLAUDE_PLUGIN_ROOT}` not available in SKILL.md text — only in hooks and .mcp.json
-- `scripts/sync.py` merges into `~/.claude/{skills,agents}` (`dirs_exist_ok=True`),
-  it does not wipe the destination first. Verified: a file already present in a
-  destination skill dir (e.g. the `claude-oracle` pip package's installed shim)
-  survives a re-sync untouched. This used to be a real hazard when `skills/oracle/`
-  bundled a full fork — resolved by depending on claude-oracle instead (see git log).
+- `scripts/sync.py` merges into `~/.claude/{skills,agents}` file by file; it does not
+  wipe the destination first, so a file only the destination has (e.g. the
+  `claude-oracle` pip package's installed shim) survives a re-sync. It also refuses to
+  **downgrade**: a destination `.md` whose first heading carries a higher version
+  (`# Oracle v4.9.0`, `# Agent Smith ... v1.13`) is kept. This is live, not theoretical —
+  the copied `skills/oracle/SKILL.md` sat at v4.6.0 while the installed skill was v4.8.0,
+  and a plain sync would have overwritten it. Re-copy upstream SKILL.md on every release.
